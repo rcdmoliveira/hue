@@ -503,6 +503,22 @@ def test_ssl_validate():
         reset()
 
 
+def test_thrift_over_http_config():
+  resets = [
+      conf.SERVER_HOST.set_for_testing('impalad_host'),
+      conf.SERVER_PORT.set_for_testing(21050),
+      conf.USE_THRIFT_HTTP.set_for_testing(True)
+  ]
+  try:
+    query_server = get_query_server_config(name='impala')
+    assert_equal(query_server.get('server_port', 21050), 28000)
+    assert_equal(query_server.get('transport_mode', 'socket'), 'http')
+    assert_equal(query_server.get('http_url', ''), 'http://impalad_host:28000')
+  finally:
+    for reset in resets:
+      reset()
+
+
 class TestImpalaDbms(object):
 
   def test_get_impala_nested_select(self):
