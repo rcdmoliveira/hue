@@ -21,7 +21,8 @@ import logging
 import sys
 
 from nose.tools import assert_equal, assert_not_equal, assert_true, assert_false, raises
-from sqlalchemy.types import NullType
+from sqlalchemy.exc import UnsupportedCompilationError
+from sqlalchemy.types import NullType, ARRAY, JSON, VARCHAR
 
 from desktop.auth.backend import rewrite_user
 from desktop.lib.django_test_util import make_logged_in_client
@@ -405,6 +406,18 @@ class TestUtils():
         'url': 'mysql://hue:localhost@hue:3306/hue'
       },
     }
+
+  def test_get_column_type_name_complex(self):
+    api = SqlAlchemyApi(self.user, self.interpreter)
+
+    with patch('notebook.connectors.sql_alchemy.str') as str:
+      str.side_effect = UnsupportedCompilationError(None, None)
+
+      assert_equal(api._get_column_type_name({'type': VARCHAR}), 'varchar')  # Not complex but not testable otherwise
+      assert_equal(api._get_column_type_name({'type': NullType}), 'null')
+      assert_equal(api._get_column_type_name({'type': ARRAY}), 'array')
+      assert_equal(api._get_column_type_name({'type': JSON}), 'json')
+
 
   def test_fix_bigquery_db_prefixes(self):
     interpreter = {
